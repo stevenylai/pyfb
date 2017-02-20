@@ -1,11 +1,11 @@
 """
     The implementation of the Facebook Client
 """
+from urllib import parse
+from tornado import gen, httpclient
+from .utils import Json2ObjectsFactory
+from . import auth
 
-import urllib
-import auth
-from urlparse import parse_qsl
-from utils import Json2ObjectsFactory
 
 class FacebookClient(object):
     """
@@ -16,7 +16,7 @@ class FacebookClient(object):
     GRAPH_URL = "https://graph.facebook.com/"
     API_URL = "https://api.facebook.com/"
 
-    BASE_AUTH_URL = "%sdialog/oauth?" % FACEBOOK_URL 
+    BASE_AUTH_URL = "%sdialog/oauth?" % FACEBOOK_URL
     DIALOG_BASE_URL = "%sdialog/feed?" % FACEBOOK_URL
     FBQL_BASE_URL = "%sfql?" % GRAPH_URL
     BASE_TOKEN_URL = "%soauth/access_token?" % GRAPH_URL
@@ -28,7 +28,8 @@ class FacebookClient(object):
      #A factory to make objects from a json
     factory = Json2ObjectsFactory()
 
-    def __init__(self, app_id, access_token=None, raw_data=False, permissions=None):
+    def __init__(self, app_id, access_token=None, raw_data=False,
+                 permissions=None):
 
         self.app_id = app_id
         self.access_token = access_token
@@ -41,14 +42,21 @@ class FacebookClient(object):
 
         self.expires = None
 
+    @gen.coroutine
     def _make_request(self, url, data=None):
         """
             Makes a simple request. If not data is a GET else is a POST.
         """
         if not data:
             data = None
-        return urllib.urlopen(url, data).read()
+        req = httpclient.HTTPRequest(
+            url=url, method='GET' if data is not None else 'POST',
+            body=data
+        )
+        resp = yield httpclient.AsyncHTTPClient().fetch(req)
+        return resp.body.decode('utf-8')
 
+    @gen.coroutine
     def _make_auth_request(self, path, **data):
         """
             Makes a request to the facebook Graph API.
@@ -56,15 +64,18 @@ class FacebookClient(object):
             Don't forget to get the access token before use it.
         """
         if self.access_token is None:
-            raise PyfbException("Must Be authenticated. Did you forget to get the access token?")
-
+            raise PyfbException(
+                "Must Be authenticated. "
+                "Did you forget to get the access token?"
+            )
         token_url = "?access_token=%s" % self.access_token
         url = "%s%s%s" % (self.GRAPH_URL, path, token_url)
         if data:
-            post_data = urllib.urlencode(data)
+            post_data = parse.urlencode(data)
         else:
             post_data = None
-        return self._make_request(url, post_data)
+        resp = yield self._make_request(url, post_data)
+        return resp
 
     def _make_object(self, name, data):
         """
@@ -76,7 +87,7 @@ class FacebookClient(object):
 
     def _get_url_path(self, dic):
 
-        return urllib.urlencode(dic)
+        return parse.urlencode(dic)
 
     def _get_auth_url(self, params, redirect_uri):
         """
@@ -119,6 +130,7 @@ class FacebookClient(object):
 
         return self._get_auth_url(params, redirect_uri)
 
+    @gen.coroutine
     def get_access_token(self, app_secret_key, secret_code, redirect_uri):
 
         if redirect_uri is None:
@@ -134,17 +146,18 @@ class FacebookClient(object):
         })
         url = "%s%s" % (self.BASE_TOKEN_URL, url_path)
 
-        data = self._make_request(url)
+        data = yield self._make_request(url)
 
         if not "access_token" in data:
             ex = self.factory.make_object('Error', data)
             raise PyfbException(ex.error.message)
 
-        data = dict(parse_qsl(data))
+        data = dict(parse.parse_qsl(data))
         self.access_token = data.get('access_token')
         self.expires = data.get('expires')
         return self.access_token
 
+    @gen.coroutine
     def exchange_token(self, app_secret_key, exchange_token):
 
         self.secret_key = app_secret_key
@@ -157,13 +170,13 @@ class FacebookClient(object):
             })
         url = "%s%s" % (self.BASE_TOKEN_URL, url_path)
 
-        data = self._make_request(url)
+        data = yield self._make_request(url)
 
         if not "access_token" in data:
             ex = self.factory.make_object('Error', data)
             raise PyfbException(ex.error.message)
 
-        data = dict(parse_qsl(data))
+        data = dict(parse.parse_qsl(data))
         self.access_token = data.get('access_token')
         self.expires = data.get('expires')
         return self.access_token, self.expires
@@ -180,11 +193,12 @@ class FacebookClient(object):
         url = "%s%s" % (self.DIALOG_BASE_URL, url_path)
         return url
 
+    @gen.coroutine
     def get_one(self, path, object_name):
         """
             Gets one object
         """
-        data = self._make_auth_request(path)
+        data = yield self._make_auth_request(path)
         obj = self._make_object(object_name, data)
 
         if hasattr(obj, 'error'):
@@ -192,6 +206,7 @@ class FacebookClient(object):
 
         return obj
 
+    @gen.coroutine
     def get_list(self, id, path, object_name=None):
         """
             Gets A list of objects
@@ -201,8 +216,8 @@ class FacebookClient(object):
         if object_name is None:
             object_name = path
         path = "%s/%s" % (id, path.lower())
-        
-        obj = self.get_one(path, object_name)
+
+        obj = yield self.get_one(path, object_name)
         obj_list = self.factory.make_paginated_list(obj, object_name)
 
         if obj_list == False:
@@ -210,6 +225,7 @@ class FacebookClient(object):
 
         return obj_list
 
+    @gen.coroutine
     def push(self, id, path, **data):
         """
             Pushes data to facebook
@@ -217,15 +233,16 @@ class FacebookClient(object):
         if id is None:
             id = "me"
         path = "%s/%s" % (id, path)
-        response = self._make_auth_request(path, **data)
+        response = yield self._make_auth_request(path, **data)
         return self._make_object("response", response)
 
+    @gen.coroutine
     def delete(self, id):
         """
             Deletes a object by id
         """
         data = {"method": "delete"}
-        response = self._make_auth_request(id, **data)
+        response = yield self._make_auth_request(id, **data)
         return self._make_object("response", response)
 
     def _get_table_name(self, query):
@@ -240,17 +257,24 @@ class FacebookClient(object):
         except Exception, e:
             raise PyfbException("Invalid FQL Syntax")
 
+    @gen.coroutine
     def execute_fql_query(self, query):
         """
             Executes a FBQL query and return a list of objects
         """
         table = self._get_table_name(query)
-        url_path = self._get_url_path({'q' : query, 'access_token' : self.access_token, 'format' : 'json'})
+        url_path = self._get_url_path(
+            {
+                'q' : query,
+                'access_token' : self.access_token,
+                'format' : 'json'
+            }
+        )
         url = "%s%s" % (self.FBQL_BASE_URL, url_path)
-        data = self._make_request(url)
+        data = yield self._make_request(url)
 
         objs = self.factory.make_objects_list(table, data)
-        
+
         if hasattr(objs, 'error'):
             raise PyfbException(objs.error.message)
 
