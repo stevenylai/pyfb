@@ -1,6 +1,8 @@
 import unittest
 import os
 import json
+import uuid
+import functools
 from tornado import testing
 from ..pyfb import Pyfb
 
@@ -12,12 +14,12 @@ class PyfbTests(testing.AsyncTestCase):
     def setUp(self):
         super().setUp()
         app_id = os.getenv('FACEBOOK_APP_ID')
-        app_token = os.getenv('FACEBOOK_TOKEN')
-        if app_id is None or app_token is None:
+        app_secret = os.getenv('FACEBOOK_APP_SECRET')
+        if app_id is None or app_secret is None:
             try:
                 from .test_data import config
                 app_id = config["FACEBOOK_APP_ID"]
-                app_token = config["FACEBOOK_TOKEN"]
+                app_secret = config["FACEBOOK_APP_SECRET"]
             except (ImportError, KeyError):
                 print(
                     "\nERROR! You must have a test_data.py file "
@@ -27,7 +29,13 @@ class PyfbTests(testing.AsyncTestCase):
                     '\t\t"FACEBOOK_TOKEN": "your_token"\n\t}\n'
                 )
         self.pyfb = Pyfb(app_id, **self.pyfb_args)
-        self.pyfb.set_access_token(app_token)
+        self.secret_code = uuid.uuid4().hex
+        self.io_loop.run_sync(
+            functools.partial(
+                self.pyfb.get_access_token, app_secret, self.secret_code
+            )
+        )
+        # self.pyfb.set_access_token(app_token)
         self.me = self.io_loop.run_sync(self.pyfb.get_myself)
 
     def test_auth(self):
