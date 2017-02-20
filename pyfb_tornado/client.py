@@ -50,7 +50,7 @@ class FacebookClient(object):
         if not data:
             data = None
         req = httpclient.HTTPRequest(
-            url=url, method='GET' if data is not None else 'POST',
+            url=url, method='GET' if data is None else 'POST',
             body=data
         )
         resp = yield httpclient.AsyncHTTPClient().fetch(req)
@@ -254,7 +254,7 @@ class FacebookClient(object):
             index = query.index(KEY) + len(KEY) + 1
             table = query[index:].strip().split(" ")[0]
             return table
-        except Exception, e:
+        except Exception as e:
             raise PyfbException("Invalid FQL Syntax")
 
     @gen.coroutine

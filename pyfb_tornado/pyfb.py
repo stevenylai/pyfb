@@ -16,7 +16,7 @@ class Pyfb(object):
     def __init__(self, app_id, access_token=None, raw_data=False,
                  permissions=None):
         self._client = FacebookClient(app_id, access_token=access_token,
-                                      raw_data=raw_data
+                                      raw_data=raw_data,
                                       permissions=permissions)
 
     def get_auth_url(self, redirect_uri=None):

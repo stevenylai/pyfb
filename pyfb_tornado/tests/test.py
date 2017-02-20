@@ -1,4 +1,5 @@
 import unittest
+import os
 import json
 from tornado import testing
 from ..pyfb import Pyfb
@@ -17,7 +18,7 @@ class PyfbTests(testing.AsyncTestCase):
                 from .test_data import config
                 app_id = config["FACEBOOK_APP_ID"]
                 app_token = config["FACEBOOK_TOKEN"]
-            except ImportError, KeyError:
+            except (ImportError, KeyError):
                 print(
                     "\nERROR! You must have a test_data.py file "
                     "providing the facebook app id and the access token."
