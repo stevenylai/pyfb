@@ -5,7 +5,7 @@
     http://developers.facebook.com/docs/reference/api/permissions/
 """
 
-#User related permissions
+# User related permissions
 
 USER_ABOUT_ME = "user_about_me"
 USER_ACTIVITIES = "user_activities"
@@ -43,7 +43,7 @@ USER_ALL_PERMISSIONS = [
     value for key, value in vars.items() if key.startswith("USER_")
 ]
 
-#Friends related permissions
+# Friends related permissions
 
 FRIENDS_ABOUT_ME = "friends_about_me"
 FRIENDS_ACTIVITIES = "friends_activities"
@@ -73,7 +73,7 @@ FRIENDS_ALL_PERMISSIONS = [
     value for key, value in vars.items() if key.startswith("FRIENDS_")
 ]
 
-#Write related permissions
+# Write related permissions
 
 WRITE_PUBLISH_STREAM = "publish_stream"
 WRITE_CREATE_EVENT = "create_event"
@@ -88,7 +88,7 @@ WRITE_ALL_PERMISSIONS = [
     value for key, value in vars.items() if key.startswith("WRITE_")
 ]
 
-#Page related permissions
+# Page related permissions
 
 PAGE_MANAGE_PAGES = "manage_pages"
 
@@ -97,6 +97,8 @@ PAGE_ALL_PERMISSIONS = [
     value for key, value in vars.items() if key.startswith("PAGE_")
 ]
 
-#All permisssions
-ALL_PERMISSIONS = USER_ALL_PERMISSIONS + FRIENDS_ALL_PERMISSIONS + \
-                  WRITE_ALL_PERMISSIONS + PAGE_ALL_PERMISSIONS
+# All permisssions
+ALL_PERMISSIONS = (
+    USER_ALL_PERMISSIONS + FRIENDS_ALL_PERMISSIONS +
+    WRITE_ALL_PERMISSIONS + PAGE_ALL_PERMISSIONS
+)

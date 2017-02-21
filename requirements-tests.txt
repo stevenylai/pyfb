@@ -1,3 +1,2 @@
 -rrequirements.txt
-nosexcover
 flake8

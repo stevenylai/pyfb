@@ -6,6 +6,7 @@
 """
 from tornado import gen
 from .client import FacebookClient, PyfbException
+__all__ = ['Pyfb', 'PyfbException']
 
 
 class Pyfb(object):
@@ -36,7 +37,7 @@ class Pyfb(object):
         """
             Gets the access token
         """
-        token = yield self._client.get_access_token(
+        token = yield self._client.get_app_access_token(
             app_secret_key, secret_code, redirect_uri
         )
         return token
@@ -133,11 +134,11 @@ class Pyfb(object):
         return res
 
     @gen.coroutine
-    def publish_picture(self,message,id=None,**kwargs):
+    def publish_picture(self, message, id=None, **kwargs):
         """
             Publish picture
         """
-        res = yield self._client.push(id,"photos",message=message,**kwargs)
+        res = yield self._client.push(id, "photos", message=message, **kwargs)
         return res
 
     @gen.coroutine
@@ -145,7 +146,9 @@ class Pyfb(object):
         """
             Publishes a message on the wall
         """
-        res = yield self._client.push(id, "comments", message=message, **kwargs)
+        res = yield self._client.push(
+            id, "comments", message=message, **kwargs
+        )
         return res
 
     @gen.coroutine

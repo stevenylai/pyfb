@@ -4,6 +4,7 @@
     This file provides utilities to the pyfb library
 """
 import json
+from tornado import gen, httpclient
 
 
 class FacebookObject(object):
@@ -24,17 +25,23 @@ class PaginatedList(list):
 
         factory = Json2ObjectsFactory()
 
+        def _get_page_url(page):
+
+            paging = getattr(parent, "paging", None)
+            if paging is None:
+                return None
+
+            return getattr(paging, page, None)
+
+        @gen.coroutine
         def _get_page(page):
 
-            paging = getattr(parent, "paging", False)
-            if not paging:
+            url = _get_page_url(page)
+            if url is None:
                 return PaginatedList()
 
-            url = getattr(paging, page, False)
-            if not url:
-                return PaginatedList()
-
-            obj = factory.make_object(object_name, urllib2.urlopen(url).read())
+            resp = yield httpclient.AsyncHTTPClient().fetch(url)
+            obj = factory.make_object(object_name, resp.body.decode('utf-8'))
             objs_list = factory.make_paginated_list(obj, object_name)
 
             if not objs_list:
@@ -42,6 +49,8 @@ class PaginatedList(list):
 
             return objs_list
 
+        self.has_next = lambda: _get_page_url("next") is not None
+        self.has_previous = lambda: _get_page_url("previous") is not None
         self.next = lambda: _get_page("next")
         self.previous = lambda: _get_page("previous")
 
@@ -67,9 +76,9 @@ class Json2ObjectsFactory(object):
 
     def make_paginated_list(self, obj, object_name):
 
-        objs = getattr(obj, object_name, False)
-        if objs == False:
-            return False
+        objs = getattr(obj, object_name, None)
+        if objs is None:
+            return None
 
         objs_list = PaginatedList(objs, obj, object_name)
         return objs_list
@@ -84,9 +93,9 @@ class Json2ObjectsFactory(object):
         return objs
 
     def _make_object(self, name, dic):
-        #Life's easy. For Python Programmers BTW ;-).
+        # Life's easy. For Python Programmers BTW ;-).
         obj = FacebookObject(name)
-        for key, value in dic.iteritems():
+        for key, value in dic.items():
             if key == 'data':
                 key = obj.__name__
             if isinstance(value, list):
