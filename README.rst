@@ -1,11 +1,21 @@
-# Pyfb_tornado - A fork of pyfb which supports Tornado with Python 3
+Pyfb_tornado - A fork of pyfb which supports Tornado with Python 3
+==================================================================
 
-### This is an Easy to Use Python Interface to the Facebook Graph API
+This is an Easy to Use Python Interface to the Facebook Graph API
+-----------------------------------------------------------------
 
 It gives you methods to access your data on facebook and
 provides objects instead of json dictionaries!
 
-## Tornado Facebook Example Using Pyfb
+To run the tests
+----------------
+
+1. Set environment variable FACEBOOK_APP_ID to your app ID
+2. Set environment variable FACEBOOK_USER_TOKEN to the testing user token.
+   You may get one from https://developers.facebook.com/tools/accesstoken/
+
+Tornado Facebook Example Using Pyfb
+-----------------------------------
 
 .. code-block:: python
 
