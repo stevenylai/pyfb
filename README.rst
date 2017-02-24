@@ -1,4 +1,4 @@
-Pyfb_tornado - A fork of pyfb which supports Tornado with Python 3
+Tornado_pyfb - A fork of pyfb which supports Tornado with Python 3
 ==================================================================
 
 This is an Easy to Use Python Interface to the Facebook Graph API
@@ -29,7 +29,7 @@ Tornado Facebook Example Using Pyfb
             )
             if len(rows) > 0:
                 return rows[0]
-            pyfb = pyfb_tornado.Pyfb(self.app_id)
+            pyfb = tornado_pyfb.Pyfb(self.app_id)
             pyfb.set_access_token(access_token)
             user_info = yield pyfb.get_myself()
             rows = yield User.by_login_method(
