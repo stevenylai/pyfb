@@ -29,6 +29,9 @@ def cmdline(args=None):
     parsers['user_self'] = parsers['user_command'].add_parser(
         'self', help='Get user self'
     )
+    parsers['user_friends'] = parsers['user_command'].add_parser(
+        'friends', help='Get user friend list'
+    )
     args = parsers['main'].parse_args(args)
     fun = None
     fb = pyfb.Pyfb(args.app_id, raw_data=True)
@@ -36,6 +39,8 @@ def cmdline(args=None):
         fb.set_access_token(args.user_access_token)
         if args.user_command == 'self':
             fun = fb.get_myself
+        elif args.user_command == 'friends':
+            fun = fb.get_friends
     if fun is not None:
         data = ioloop.IOLoop.current().run_sync(fun)
         print(json.dumps(data, indent=2))

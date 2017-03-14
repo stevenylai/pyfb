@@ -98,7 +98,7 @@ class Pyfb(object):
         """
             Gets a list with your friends
         """
-        res = yield self._client.get_list(id, "Friends")
+        res = yield self._client.get_list(id, "friends")
         return res
 
     @gen.coroutine
