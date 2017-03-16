@@ -94,11 +94,13 @@ class Pyfb(object):
         return res
 
     @gen.coroutine
-    def get_friends(self, id=None):
+    def get_friends(self, id=None, friend_type='app'):
         """
             Gets a list with your friends
         """
-        res = yield self._client.get_list(id, "friends")
+        res = yield self._client.get_list(
+            id, "friends" if friend_type == 'app' else 'invitable_friends'
+        )
         return res
 
     @gen.coroutine

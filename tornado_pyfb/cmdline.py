@@ -1,5 +1,6 @@
 """Command line for testing"""
 import argparse
+import functools
 import json
 from tornado import ioloop
 from . import pyfb
@@ -30,7 +31,10 @@ def cmdline(args=None):
         'self', help='Get user self'
     )
     parsers['user_friends'] = parsers['user_command'].add_parser(
-        'friends', help='Get user friend list'
+        'friends', help='Get user friend list (all or app, default app)'
+    )
+    parsers['user_friends'].add_argument(
+        '--friend_type', default='app', help='Friend type'
     )
     args = parsers['main'].parse_args(args)
     fun = None
@@ -40,7 +44,9 @@ def cmdline(args=None):
         if args.user_command == 'self':
             fun = fb.get_myself
         elif args.user_command == 'friends':
-            fun = fb.get_friends
+            fun = functools.partial(
+                fb.get_friends, friend_type=args.friend_type
+            )
     if fun is not None:
         data = ioloop.IOLoop.current().run_sync(fun)
         print(json.dumps(data, indent=2))
